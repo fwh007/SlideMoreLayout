@@ -1,0 +1,67 @@
+apply plugin: 'com.android.library'
+apply plugin: 'com.github.dcendents.android-maven'
+apply plugin: 'com.jfrog.bintray'
+
+android {
+    compileSdkVersion 23
+    buildToolsVersion "24.0.0"
+
+    defaultConfig {
+        minSdkVersion 14
+        targetSdkVersion 23
+        versionCode 1
+        versionName "0.1.0"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    testCompile 'junit:junit:4.12'
+    compile 'com.android.support:appcompat-v7:23.4.0'
+}
+
+bintray {
+    user = properties.get("bintray.user")
+    key = properties.get("bintray.apikey")
+    pkg {
+        repo = 'Android'
+        name = 'SlideMoreLayout'
+        licenses = ['Apache-2.0']
+        websiteUrl = 'https://github.com/fwh007/SlideMoreLayout'
+        issueTrackerUrl = 'https://github.com/fwh007/SlideMoreLayout/issues'
+        vcsUrl = 'https://github.com/fwh007/SlideMoreLayout.git'
+        labels = ['hunlimao']
+        publicDownloadNumbers = true
+    }
+}
+
+ext {
+    bintrayRepo = 'Android'
+    bintrayName = 'SlideMoreLayout'
+
+    publishedGroupId = 'com.github.fwh007'
+    libraryName = 'SlideMoreLayout'
+    artifact = 'slide-more-layout'
+
+    libraryDescription = ''
+
+    siteUrl = 'https://github.com/fwh007/SlideMoreLayout'
+    gitUrl = 'https://github.com/fwh007/SlideMoreLayout.git'
+    issueUrl = 'https://github.com/fwh007/SlideMoreLayout/issues'
+
+    libraryVersion = '0.1.0'
+
+    developerId = 'winter'
+    developerName = 'Winter Feng'
+    developerEmail = '787409450@qq.com'
+
+    licenseName = 'The Apache Software License, Version 2.0'
+    licenseUrl = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+    allLicenses = ["Apache-2.0"]
+}
