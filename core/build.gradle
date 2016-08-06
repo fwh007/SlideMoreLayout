@@ -26,20 +26,30 @@ dependencies {
     compile 'com.android.support:appcompat-v7:23.4.0'
 }
 
-bintray {
-    user = properties.get("bintray.user")
-    key = properties.get("bintray.apikey")
-    pkg {
-        repo = 'Android'
-        name = 'SlideMoreLayout'
-        licenses = ['Apache-2.0']
-        websiteUrl = 'https://github.com/fwh007/SlideMoreLayout'
-        issueTrackerUrl = 'https://github.com/fwh007/SlideMoreLayout/issues'
-        vcsUrl = 'https://github.com/fwh007/SlideMoreLayout.git'
-        labels = ['hunlimao']
-        publicDownloadNumbers = true
-    }
-}
+//Properties properties = new Properties()
+//properties.load(project.rootProject.file('local.properties').newDataInputStream())
+//
+//// refer to https://github.com/bintray/gradle-bintray-plugin#readme
+//bintray {
+//    user = properties.getProperty("bintray.user")
+//    key = properties.getProperty("bintray.apikey")
+//    publish = true
+//    override = false
+//    pkg {
+//        repo = 'Android'
+//        name = 'SlideMoreLayout'
+//        licenses = ['Apache-2.0']
+//        websiteUrl = 'https://github.com/fwh007/SlideMoreLayout'
+//        issueTrackerUrl = 'https://github.com/fwh007/SlideMoreLayout/issues'
+//        vcsUrl = 'https://github.com/fwh007/SlideMoreLayout.git'
+//        labels = ['hunlimao']
+//        publicDownloadNumbers = true
+//
+//        version {
+//            name = '0.1.0' //Bintray logical version name
+//        }
+//    }
+//}
 
 ext {
     bintrayRepo = 'Android'
@@ -65,3 +75,6 @@ ext {
     licenseUrl = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
     allLicenses = ["Apache-2.0"]
 }
+
+apply from: 'https://raw.githubusercontent.com/nuuneoi/JCenter/master/installv1.gradle'
+apply from: 'https://raw.githubusercontent.com/nuuneoi/JCenter/master/bintrayv1.gradle'
