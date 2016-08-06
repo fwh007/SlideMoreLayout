@@ -4,6 +4,7 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.content.Context;
+import android.support.v4.view.NestedScrollingChild;
 import android.support.v4.view.NestedScrollingParent;
 import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
@@ -17,7 +18,7 @@ import android.view.animation.Interpolator;
 /**
  * Created by Winter on 2016/8/3 0003.
  */
-public class SlideMoreLayout extends ViewGroup implements NestedScrollingParent {
+public class SlideMoreLayout extends ViewGroup implements NestedScrollingParent, NestedScrollingChild {
 
     private View mSurfaceView;
     private View mDetailView;
@@ -185,6 +186,7 @@ public class SlideMoreLayout extends ViewGroup implements NestedScrollingParent 
         return false;
     }
 
+    //NestedScrollingParent
     @Override
     public boolean onStartNestedScroll(View child, View target, int nestedScrollAxes) {
         return (nestedScrollAxes & ViewCompat.SCROLL_AXIS_VERTICAL) != 0;
@@ -204,13 +206,14 @@ public class SlideMoreLayout extends ViewGroup implements NestedScrollingParent 
     public void onNestedScroll(View target, int dxConsumed, int dyConsumed, int dxUnconsumed, int dyUnconsumed) {
         if (isHandleScroll) {
             if (dyUnconsumed != 0) {
-                addSlideOffset(dyUnconsumed);
             } else if (Math.abs(dyConsumed) > 10) {
-                if (isShowingDetail) {
-                    showDetail();
-                }else{
-                    showSurface();
-                }
+                addSlideOffset(dyUnconsumed);
+                addSlideOffset(dyConsumed);
+//                if (isShowingDetail) {
+//                    showDetail();
+//                } else {
+//                    showSurface();
+//                }
             }
         } else if ((!isShowingDetail && dyUnconsumed > 0) || (isShowingDetail && dyUnconsumed < 0)) {
             addSlideOffset(dyUnconsumed);
@@ -238,6 +241,92 @@ public class SlideMoreLayout extends ViewGroup implements NestedScrollingParent 
     @Override
     public int getNestedScrollAxes() {
         return ViewCompat.SCROLL_AXIS_VERTICAL;
+    }
+
+    //NestedScrollingChild
+    @Override
+    public void setNestedScrollingEnabled(boolean enabled) {
+        if (mSurfaceView instanceof NestedScrollingChild) {
+            ((NestedScrollingChild) mSurfaceView).setNestedScrollingEnabled(enabled);
+        }
+        if (mDetailView instanceof NestedScrollingChild) {
+            ((NestedScrollingChild) mDetailView).setNestedScrollingEnabled(enabled);
+        }
+    }
+
+    @Override
+    public boolean isNestedScrollingEnabled() {
+        if (!isShowingDetail && mSurfaceView instanceof NestedScrollingChild) {
+            return ((NestedScrollingChild) mSurfaceView).isNestedScrollingEnabled();
+        } else if (isShowingDetail && mDetailView instanceof NestedScrollingChild) {
+            return ((NestedScrollingChild) mDetailView).isNestedScrollingEnabled();
+        }
+        return super.isNestedScrollingEnabled();
+    }
+
+    @Override
+    public boolean startNestedScroll(int axes) {
+        if (!isShowingDetail && mSurfaceView instanceof NestedScrollingChild) {
+            return ((NestedScrollingChild) mSurfaceView).startNestedScroll(axes);
+        } else if (isShowingDetail && mDetailView instanceof NestedScrollingChild) {
+            return ((NestedScrollingChild) mDetailView).startNestedScroll(axes);
+        }
+        return super.startNestedScroll(axes);
+    }
+
+    @Override
+    public void stopNestedScroll() {
+        if (!isShowingDetail && mSurfaceView instanceof NestedScrollingChild) {
+            ((NestedScrollingChild) mSurfaceView).stopNestedScroll();
+        } else if (isShowingDetail && mDetailView instanceof NestedScrollingChild) {
+            ((NestedScrollingChild) mDetailView).stopNestedScroll();
+        }
+    }
+
+    @Override
+    public boolean hasNestedScrollingParent(){
+        return true;
+    }
+
+    @Override
+    public boolean dispatchNestedScroll(int dxConsumed, int dyConsumed,
+                                        int dxUnconsumed, int dyUnconsumed, int[] offsetInWindow){
+        if (!isShowingDetail && mSurfaceView instanceof NestedScrollingChild) {
+            return ((NestedScrollingChild) mSurfaceView).dispatchNestedScroll(dxConsumed, dyConsumed, dxUnconsumed, dyUnconsumed, offsetInWindow);
+        } else if (isShowingDetail && mDetailView instanceof NestedScrollingChild) {
+            return ((NestedScrollingChild) mDetailView).dispatchNestedScroll(dxConsumed, dyConsumed, dxUnconsumed, dyUnconsumed, offsetInWindow);
+        }
+        return super.dispatchNestedScroll(dxConsumed, dyConsumed, dxUnconsumed, dyUnconsumed, offsetInWindow);
+    }
+
+    @Override
+    public boolean dispatchNestedPreScroll(int dx, int dy, int[] consumed, int[] offsetInWindow){
+        if (!isShowingDetail && mSurfaceView instanceof NestedScrollingChild) {
+            return ((NestedScrollingChild) mSurfaceView).dispatchNestedPreScroll(dx, dy, consumed, offsetInWindow);
+        } else if (isShowingDetail && mDetailView instanceof NestedScrollingChild) {
+            return ((NestedScrollingChild) mDetailView).dispatchNestedPreScroll(dx, dy, consumed, offsetInWindow);
+        }
+        return super.dispatchNestedPreScroll(dx, dy, consumed, offsetInWindow);
+    }
+
+    @Override
+    public boolean dispatchNestedFling(float velocityX, float velocityY, boolean consumed){
+        if (!isShowingDetail && mSurfaceView instanceof NestedScrollingChild) {
+            return ((NestedScrollingChild) mSurfaceView).dispatchNestedFling(velocityX, velocityY, consumed);
+        } else if (isShowingDetail && mDetailView instanceof NestedScrollingChild) {
+            return ((NestedScrollingChild) mDetailView).dispatchNestedFling(velocityX, velocityY, consumed);
+        }
+        return super.dispatchNestedFling(velocityX, velocityY, consumed);
+    }
+
+    @Override
+    public boolean dispatchNestedPreFling(float velocityX, float velocityY){
+        if (!isShowingDetail && mSurfaceView instanceof NestedScrollingChild) {
+            return ((NestedScrollingChild) mSurfaceView).dispatchNestedPreFling(velocityX, velocityY);
+        } else if (isShowingDetail && mDetailView instanceof NestedScrollingChild) {
+            return ((NestedScrollingChild) mDetailView).dispatchNestedPreFling(velocityX, velocityY);
+        }
+        return super.dispatchNestedPreFling(velocityX, velocityY);
     }
 
     private void addSlideOffset(int offset) {
