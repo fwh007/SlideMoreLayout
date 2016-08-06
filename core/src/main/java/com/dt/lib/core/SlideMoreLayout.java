@@ -4,6 +4,7 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.support.v4.view.NestedScrollingChild;
 import android.support.v4.view.NestedScrollingParent;
 import android.support.v4.view.ViewCompat;
@@ -12,8 +13,6 @@ import android.util.TypedValue;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.DecelerateInterpolator;
-import android.view.animation.Interpolator;
 
 /**
  * Created by Winter on 2016/8/3 0003.
@@ -28,8 +27,7 @@ public class SlideMoreLayout extends ViewGroup implements NestedScrollingParent,
     private boolean isHandleScroll;
     private Animator mAnimator;
 
-    private int mSwitchThreshold = 100;//dp
-    private Interpolator mInterpolator = new DecelerateInterpolator(2f);
+    private int mSwitchThreshold = 100;//default threshold, unit is dp
 
     public SlideMoreLayout(Context context) {
         super(context);
@@ -52,6 +50,12 @@ public class SlideMoreLayout extends ViewGroup implements NestedScrollingParent,
         isHandleScroll = false;
         isShowingDetail = false;
         mSwitchThreshold = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, mSwitchThreshold, context.getResources().getDisplayMetrics());
+
+        if (attrs != null) {
+            TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.SlideMoreLayout);
+            mSwitchThreshold = typedArray.getDimensionPixelSize(R.styleable.SlideMoreLayout_switchThreshold, mSwitchThreshold);
+            typedArray.recycle();
+        }
     }
 
     @Override
@@ -172,12 +176,12 @@ public class SlideMoreLayout extends ViewGroup implements NestedScrollingParent,
                 return true;
             case MotionEvent.ACTION_MOVE:
                 float moveDis = downY - event.getY();
-                if ((!isShowingDetail && moveDis > 0) || (isShowingDetail && moveDis < 0)) {
+//                if ((!isShowingDetail && moveDis > 0) || (isShowingDetail && moveDis < 0)) {
                     addSlideOffset((int) moveDis);
                     downY = event.getY();
                     return true;
-                }
-                return false;
+//                }
+//                return false;
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
                 resetSlideOffset();
@@ -206,8 +210,8 @@ public class SlideMoreLayout extends ViewGroup implements NestedScrollingParent,
     public void onNestedScroll(View target, int dxConsumed, int dyConsumed, int dxUnconsumed, int dyUnconsumed) {
         if (isHandleScroll) {
             if (dyUnconsumed != 0) {
-            } else if (Math.abs(dyConsumed) > 10) {
                 addSlideOffset(dyUnconsumed);
+            } else if (Math.abs(dyConsumed) > 10) {
                 addSlideOffset(dyConsumed);
 //                if (isShowingDetail) {
 //                    showDetail();
