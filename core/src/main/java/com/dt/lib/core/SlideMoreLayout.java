@@ -7,7 +7,6 @@ import android.content.Context;
 import android.support.v4.view.NestedScrollingParent;
 import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.MotionEvent;
 import android.view.View;
@@ -205,11 +204,13 @@ public class SlideMoreLayout extends ViewGroup implements NestedScrollingParent 
     public void onNestedScroll(View target, int dxConsumed, int dyConsumed, int dxUnconsumed, int dyUnconsumed) {
         if (isHandleScroll) {
             if (dyUnconsumed != 0) {
-                Log.d("Slide", "dyUnconsumed -> " + dyUnconsumed);
                 addSlideOffset(dyUnconsumed);
-            } else if (dyConsumed != 0) {
-                Log.d("Slide", "dyConsumed -> " + dyConsumed);
-                addSlideOffset(dyConsumed);
+            } else if (Math.abs(dyConsumed) > 10) {
+                if (isShowingDetail) {
+                    showDetail();
+                }else{
+                    showSurface();
+                }
             }
         } else if ((!isShowingDetail && dyUnconsumed > 0) || (isShowingDetail && dyUnconsumed < 0)) {
             addSlideOffset(dyUnconsumed);
@@ -234,6 +235,7 @@ public class SlideMoreLayout extends ViewGroup implements NestedScrollingParent 
         return false;
     }
 
+    @Override
     public int getNestedScrollAxes() {
         return ViewCompat.SCROLL_AXIS_VERTICAL;
     }
@@ -244,7 +246,6 @@ public class SlideMoreLayout extends ViewGroup implements NestedScrollingParent 
 
     public void setSlideOffset(int offset) {
         mSlideOffset = Math.min(Math.max(0, offset), mSlideMaxHeight);
-        Log.d("Slide", "mSlideOffset -> " + mSlideOffset);
         requestLayout();
     }
 
