@@ -65,7 +65,7 @@ ext {
     gitUrl = 'https://github.com/fwh007/SlideMoreLayout.git'
     issueUrl = 'https://github.com/fwh007/SlideMoreLayout/issues'
 
-    libraryVersion = '0.2.0'
+    libraryVersion = '0.3.0'
 
     developerId = 'winter'
     developerName = 'Winter Feng'

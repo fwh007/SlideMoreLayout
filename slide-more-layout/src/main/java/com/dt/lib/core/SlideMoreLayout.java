@@ -6,7 +6,9 @@ import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.support.v4.view.NestedScrollingChild;
+import android.support.v4.view.NestedScrollingChildHelper;
 import android.support.v4.view.NestedScrollingParent;
+import android.support.v4.view.NestedScrollingParentHelper;
 import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
 import android.util.TypedValue;
@@ -26,8 +28,10 @@ public class SlideMoreLayout extends ViewGroup implements NestedScrollingParent,
     private boolean isShowingDetail;
     private boolean isHandleScroll;
     private Animator mAnimator;
+    private NestedScrollingParentHelper nestedParentHelper;
+    private NestedScrollingChildHelper nestedChildHelper;
 
-    private int mSwitchThreshold = 100;//default threshold, unit is dp
+    private int mSwitchThreshold = 60;//default threshold (dp)
 
     public SlideMoreLayout(Context context) {
         super(context);
@@ -50,12 +54,16 @@ public class SlideMoreLayout extends ViewGroup implements NestedScrollingParent,
         isHandleScroll = false;
         isShowingDetail = false;
         mSwitchThreshold = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, mSwitchThreshold, context.getResources().getDisplayMetrics());
+        nestedParentHelper = new NestedScrollingParentHelper(this);
+        nestedChildHelper = new NestedScrollingChildHelper(this);
 
         if (attrs != null) {
-            TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.SlideMoreLayout);
-            mSwitchThreshold = typedArray.getDimensionPixelSize(R.styleable.SlideMoreLayout_switchThreshold, mSwitchThreshold);
+            TypedArray typedArray = context.obtainStyledAttributes(attrs, com.dt.lib.core.R.styleable.SlideMoreLayout);
+            mSwitchThreshold = typedArray.getDimensionPixelSize(com.dt.lib.core.R.styleable.SlideMoreLayout_switchThreshold, mSwitchThreshold);
             typedArray.recycle();
         }
+
+        setNestedScrollingEnabled(true);
     }
 
     @Override
@@ -176,12 +184,9 @@ public class SlideMoreLayout extends ViewGroup implements NestedScrollingParent,
                 return true;
             case MotionEvent.ACTION_MOVE:
                 float moveDis = downY - event.getY();
-//                if ((!isShowingDetail && moveDis > 0) || (isShowingDetail && moveDis < 0)) {
-                    addSlideOffset((int) moveDis);
-                    downY = event.getY();
-                    return true;
-//                }
-//                return false;
+                addSlideOffset((int) moveDis);
+                downY = event.getY();
+                return true;
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
                 resetSlideOffset();
@@ -198,31 +203,35 @@ public class SlideMoreLayout extends ViewGroup implements NestedScrollingParent,
 
     @Override
     public void onNestedScrollAccepted(View child, View target, int nestedScrollAxes) {
+        nestedParentHelper.onNestedScrollAccepted(child, target, nestedScrollAxes);
         isHandleScroll = false;
+        startNestedScroll(ViewCompat.SCROLL_AXIS_VERTICAL);
     }
 
     @Override
     public void onNestedPreScroll(View target, int dx, int dy, int[] consumed) {
-
+        dispatchNestedPreScroll(dx, dy, consumed, null);
     }
 
     @Override
     public void onNestedScroll(View target, int dxConsumed, int dyConsumed, int dxUnconsumed, int dyUnconsumed) {
+        int myConsumed = 0;
+        int myUnconsumed = dyUnconsumed;
         if (isHandleScroll) {
             if (dyUnconsumed != 0) {
                 addSlideOffset(dyUnconsumed);
+                myConsumed = dyUnconsumed;
+                myUnconsumed = 0;
             } else if (Math.abs(dyConsumed) > 10) {
                 addSlideOffset(dyConsumed);
-//                if (isShowingDetail) {
-//                    showDetail();
-//                } else {
-//                    showSurface();
-//                }
             }
         } else if ((!isShowingDetail && dyUnconsumed > 0) || (isShowingDetail && dyUnconsumed < 0)) {
             addSlideOffset(dyUnconsumed);
             isHandleScroll = true;
+            myConsumed = dyUnconsumed;
+            myUnconsumed = 0;
         }
+        dispatchNestedScroll(0, myConsumed, dxUnconsumed, myUnconsumed, null);
     }
 
     @Override
@@ -230,107 +239,70 @@ public class SlideMoreLayout extends ViewGroup implements NestedScrollingParent,
         if (isHandleScroll) {
             resetSlideOffset();
         }
+        nestedParentHelper.onStopNestedScroll(target);
+        stopNestedScroll();
     }
 
     @Override
     public boolean onNestedFling(View target, float velocityX, float velocityY, boolean consumed) {
-        return false;
+        return dispatchNestedFling(velocityX, velocityY, consumed);
     }
 
     @Override
     public boolean onNestedPreFling(View target, float velocityX, float velocityY) {
-        return false;
+        return dispatchNestedPreFling(velocityX, velocityY);
     }
 
     @Override
     public int getNestedScrollAxes() {
-        return ViewCompat.SCROLL_AXIS_VERTICAL;
+        return nestedParentHelper.getNestedScrollAxes();
     }
 
     //NestedScrollingChild
     @Override
     public void setNestedScrollingEnabled(boolean enabled) {
-        if (mSurfaceView instanceof NestedScrollingChild) {
-            ((NestedScrollingChild) mSurfaceView).setNestedScrollingEnabled(enabled);
-        }
-        if (mDetailView instanceof NestedScrollingChild) {
-            ((NestedScrollingChild) mDetailView).setNestedScrollingEnabled(enabled);
-        }
+        nestedChildHelper.setNestedScrollingEnabled(enabled);
     }
 
     @Override
     public boolean isNestedScrollingEnabled() {
-        if (!isShowingDetail && mSurfaceView instanceof NestedScrollingChild) {
-            return ((NestedScrollingChild) mSurfaceView).isNestedScrollingEnabled();
-        } else if (isShowingDetail && mDetailView instanceof NestedScrollingChild) {
-            return ((NestedScrollingChild) mDetailView).isNestedScrollingEnabled();
-        }
-        return super.isNestedScrollingEnabled();
+        return nestedChildHelper.isNestedScrollingEnabled();
     }
 
     @Override
     public boolean startNestedScroll(int axes) {
-        if (!isShowingDetail && mSurfaceView instanceof NestedScrollingChild) {
-            return ((NestedScrollingChild) mSurfaceView).startNestedScroll(axes);
-        } else if (isShowingDetail && mDetailView instanceof NestedScrollingChild) {
-            return ((NestedScrollingChild) mDetailView).startNestedScroll(axes);
-        }
-        return super.startNestedScroll(axes);
+        return nestedChildHelper.startNestedScroll(axes);
     }
 
     @Override
     public void stopNestedScroll() {
-        if (!isShowingDetail && mSurfaceView instanceof NestedScrollingChild) {
-            ((NestedScrollingChild) mSurfaceView).stopNestedScroll();
-        } else if (isShowingDetail && mDetailView instanceof NestedScrollingChild) {
-            ((NestedScrollingChild) mDetailView).stopNestedScroll();
-        }
+        nestedChildHelper.stopNestedScroll();
     }
 
     @Override
-    public boolean hasNestedScrollingParent(){
-        return true;
+    public boolean hasNestedScrollingParent() {
+        return nestedChildHelper.hasNestedScrollingParent();
     }
 
     @Override
     public boolean dispatchNestedScroll(int dxConsumed, int dyConsumed,
-                                        int dxUnconsumed, int dyUnconsumed, int[] offsetInWindow){
-        if (!isShowingDetail && mSurfaceView instanceof NestedScrollingChild) {
-            return ((NestedScrollingChild) mSurfaceView).dispatchNestedScroll(dxConsumed, dyConsumed, dxUnconsumed, dyUnconsumed, offsetInWindow);
-        } else if (isShowingDetail && mDetailView instanceof NestedScrollingChild) {
-            return ((NestedScrollingChild) mDetailView).dispatchNestedScroll(dxConsumed, dyConsumed, dxUnconsumed, dyUnconsumed, offsetInWindow);
-        }
-        return super.dispatchNestedScroll(dxConsumed, dyConsumed, dxUnconsumed, dyUnconsumed, offsetInWindow);
+                                        int dxUnconsumed, int dyUnconsumed, int[] offsetInWindow) {
+        return nestedChildHelper.dispatchNestedScroll(dxConsumed, dyConsumed, dxUnconsumed, dyUnconsumed, offsetInWindow);
     }
 
     @Override
-    public boolean dispatchNestedPreScroll(int dx, int dy, int[] consumed, int[] offsetInWindow){
-        if (!isShowingDetail && mSurfaceView instanceof NestedScrollingChild) {
-            return ((NestedScrollingChild) mSurfaceView).dispatchNestedPreScroll(dx, dy, consumed, offsetInWindow);
-        } else if (isShowingDetail && mDetailView instanceof NestedScrollingChild) {
-            return ((NestedScrollingChild) mDetailView).dispatchNestedPreScroll(dx, dy, consumed, offsetInWindow);
-        }
-        return super.dispatchNestedPreScroll(dx, dy, consumed, offsetInWindow);
+    public boolean dispatchNestedPreScroll(int dx, int dy, int[] consumed, int[] offsetInWindow) {
+        return nestedChildHelper.dispatchNestedPreScroll(dx, dy, consumed, offsetInWindow);
     }
 
     @Override
-    public boolean dispatchNestedFling(float velocityX, float velocityY, boolean consumed){
-        if (!isShowingDetail && mSurfaceView instanceof NestedScrollingChild) {
-            return ((NestedScrollingChild) mSurfaceView).dispatchNestedFling(velocityX, velocityY, consumed);
-        } else if (isShowingDetail && mDetailView instanceof NestedScrollingChild) {
-            return ((NestedScrollingChild) mDetailView).dispatchNestedFling(velocityX, velocityY, consumed);
-        }
-        return super.dispatchNestedFling(velocityX, velocityY, consumed);
+    public boolean dispatchNestedFling(float velocityX, float velocityY, boolean consumed) {
+        return nestedChildHelper.dispatchNestedFling(velocityX, velocityY, consumed);
     }
 
     @Override
-    public boolean dispatchNestedPreFling(float velocityX, float velocityY){
-        if (!isShowingDetail && mSurfaceView instanceof NestedScrollingChild) {
-            return ((NestedScrollingChild) mSurfaceView).dispatchNestedPreFling(velocityX, velocityY);
-        } else if (isShowingDetail && mDetailView instanceof NestedScrollingChild) {
-            return ((NestedScrollingChild) mDetailView).dispatchNestedPreFling(velocityX, velocityY);
-        }
-        return super.dispatchNestedPreFling(velocityX, velocityY);
+    public boolean dispatchNestedPreFling(float velocityX, float velocityY) {
+        return nestedChildHelper.dispatchNestedPreFling(velocityX, velocityY);
     }
 
     private void addSlideOffset(int offset) {
@@ -392,9 +364,5 @@ public class SlideMoreLayout extends ViewGroup implements NestedScrollingParent,
         });
         mAnimator.setDuration(300);
         mAnimator.start();
-    }
-
-    private enum Status {
-        surface, detail, toDetail, toSurface
     }
 }
