@@ -30,6 +30,7 @@ public class SlideMoreLayout extends ViewGroup implements NestedScrollingParent,
     private Animator mAnimator;
     private NestedScrollingParentHelper nestedParentHelper;
     private NestedScrollingChildHelper nestedChildHelper;
+    private OnSlideListener mOnSlideListener;
 
     private int mSwitchThreshold = 60;//default threshold (dp)
 
@@ -46,6 +47,10 @@ public class SlideMoreLayout extends ViewGroup implements NestedScrollingParent,
     public SlideMoreLayout(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init(context, attrs, defStyleAttr);
+    }
+
+    public void setOnSlideListener(OnSlideListener onSlideListener) {
+        this.mOnSlideListener = onSlideListener;
     }
 
     private void init(Context context, AttributeSet attrs, int defStyleAttr) {
@@ -345,6 +350,9 @@ public class SlideMoreLayout extends ViewGroup implements NestedScrollingParent,
             @Override
             public void onAnimationEnd(Animator animation) {
                 isShowingDetail = true;
+                if (mOnSlideListener != null) {
+                    mOnSlideListener.onSlide(true);
+                }
             }
         });
         mAnimator.setDuration(300);
@@ -360,9 +368,16 @@ public class SlideMoreLayout extends ViewGroup implements NestedScrollingParent,
             @Override
             public void onAnimationEnd(Animator animation) {
                 isShowingDetail = false;
+                if (mOnSlideListener != null) {
+                    mOnSlideListener.onSlide(false);
+                }
             }
         });
         mAnimator.setDuration(300);
         mAnimator.start();
+    }
+
+    public interface OnSlideListener{
+        void onSlide(boolean isSlideToDetail);
     }
 }
